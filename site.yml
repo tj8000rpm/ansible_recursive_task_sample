@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: call recursive task
+      include_tasks: recursive_task.yml
+
+    - name: check result
+      debug:
+        msg: '{{ task_output | length }}'
+

@@ -1,0 +1,49 @@
+---
+# INPUT: none
+# OUTPUT: task_output as list
+
+- name: '## Initialize local variables'
+  set_fact:
+    _output: []
+    # for prevent infinite loop
+    _depth: 0
+    _max_depth: 50
+    # initial access point
+    _url: http://localhost:34000/home
+  when:
+    - _output is undefined or _output == []
+
+- name: '## Infinite loop check'
+  fail:
+    msg: 'maximum recursion depth({{ _max_depth }}) exceeded'
+  when: _depth | int > _max_depth
+
+- name: '## ({{ _depth | int + 1 }} / {{ _max_depth }}): retrieve from {{ _url }}'
+  uri:
+    url: '{{ _url }}'
+    follow_redirects: all
+  register: _uri_output
+
+- name: '## Update local variables'
+  set_fact:
+    _url: '{% if "link" in _uri_output %}{{ _uri_output.link | regex_replace("^.*<(.*)>.*$", "\1") }}{% else %}{% endif %}'
+    _output: '{{ _output + _uri_output.json }}'
+    _depth: '{{ _depth | int + 1 }}'
+
+- name: '## At the end, set a result values and flush local variables'
+  set_fact:
+    task_output: '{{ _output }}'
+    _output: []
+    _depth:
+    _max_depth:
+    _uri: ''
+  when:
+    - _url == ''
+
+- name: '## Next url: Include tasks recursively'
+  include_tasks:
+    file: recursive_task.yml
+    apply:
+      tags: recursive
+  when: _url != ''
+
