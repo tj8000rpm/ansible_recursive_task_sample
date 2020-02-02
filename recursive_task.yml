@@ -41,9 +41,6 @@
     - _url == ''
 
 - name: '## Next url: Include tasks recursively'
-  include_tasks:
-    file: recursive_task.yml
-    apply:
-      tags: recursive
+  include_tasks: recursive_task.yml
   when: _url != ''
 
